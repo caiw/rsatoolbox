@@ -46,6 +46,12 @@ for i = 1:numel(localOptions.textLabels)
 	localOptions.textLabels{i} = deunderscore(localOptions.textLabels{i});
 end%for:i
 
+if isfield(localOptions, 'dotColours')
+	for itemI = 1:nItems
+		plot(coords_xy(itemI,1), coords_xy(itemI,2),'o','MarkerFaceColor',localOptions.dotColours(itemI, :),'MarkerEdgeColor','none','MarkerSize', localOptions.dotSize);
+	end%for:itemI
+end%if:dotColours
+
 if isfield(localOptions, 'categoryColumns')
 
     nCategories=size(localOptions.categoryColumns,2);
@@ -79,11 +85,6 @@ else
 	end%for:itemI
 end%if:categoryColumns
 
-if isfield(localOptions, 'dotColours')
-	for itemI = 1:nItems
-		plot(coords_xy(itemI,1), coords_xy(itemI,2),'o','MarkerFaceColor',localOptions.dotColours(itemI, :),'MarkerEdgeColor','none','MarkerSize', localOptions.dotSize);
-	end%for:itemI
-end%if:dotColours
 axis off
 
 end%function
