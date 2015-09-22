@@ -110,6 +110,11 @@ else
 			MDSOptions.dotColours = [MDSOptions.dotColours; RDMs(i).color];
 		end%for:i
 	end%if:localOptions.dotColours
+    
+    % Text label font size
+    if isfield(localOptions, 'fontSize')
+        MDSOptions.fontSize = localOptions.fontSize;
+    end%if
 	
 	% Figure numbers
 	if isfield(localOptions, 'figureNumber')

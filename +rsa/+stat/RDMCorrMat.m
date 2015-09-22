@@ -1,6 +1,6 @@
 function corrMat = RDMCorrMat(RDMs,figPlotSpec,type)
 % USAGE
-% corrMat = RDMCorrMat(RDMs[,figPlotSpec])
+% corrMat = RDMCorrMat(RDMs[,figPlotSpec,type])
 %
 % FUNCTION
 % returns and optionally displays the correlation matrix (spearman) of a set

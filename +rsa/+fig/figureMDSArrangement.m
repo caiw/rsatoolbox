@@ -173,6 +173,9 @@ if isfield(localOptions,'figI_textLabels')&&~isempty(localOptions.figI_textLabel
 		if isfield(localOptions, 'dotSize')
 			veryLocalOptions.dotSize = localOptions.dotSize;
 		end%if
+        if isfield(localOptions, 'fontSize')
+            veryLocalOptoins.fontSize = localOptions.fontSize;
+        end%if
         plotDotsWithTextLabels(pats_mds_2D,veryLocalOptions);
 		
 		% Plot convex hulls
