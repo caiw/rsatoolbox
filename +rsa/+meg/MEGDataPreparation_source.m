@@ -110,7 +110,7 @@ end%function
 
 % Prepares the data of a single subject, and a single hemisphere.
 %
-% Cai Wingfiedl 2015-03, based on Su Li's code
+% Cai Wingfield 2015-03, based on Su Li's code
 function STCMetadata = prepare_single_hemisphere_data(subject_i, chi, overwriteFlag, usingMask, masks, meshPaths, imageDataPath, missingFilesLog, betas, userOptions)
 
     import rsa.*
@@ -218,14 +218,14 @@ function STCMetadata = convertToSTCMetadata(MEGData_stc, usingMask, mask, userOp
     
     % Raw data sizes, before downsampling
 
-    % The number of vertices and timepoints in the
-    % raw data
+    % The number of vertices and timepoints in the raw data.
     [nVertices_raw, nTimepoints_raw] = size(MEGData_stc.data);
-    % The time index of the first datapoint, in
-    % seconds.
+    
+    % The time index of the first datapoint, in seconds.
     firstDatapointTime_raw = MEGData_stc.tmin;
-    % The interval between successive datapoints in
-    % the raw data, in seconds.
+    
+    % The interval between successive datapoints in  the raw data,
+    % in seconds.
     timeStep_raw = MEGData_stc.tstep;
     
     %% Downsampling constants
@@ -235,23 +235,21 @@ function STCMetadata = convertToSTCMetadata(MEGData_stc, usingMask, mask, userOp
         error('MEGDataPreparation_source:InsufficientSpatialResolution', 'There aren''t enough vertices in the raw data to meet the target resolution.');
     end
 
-    % Now the actual downsampling targets can be
-    % calculated
+    % Now the actual downsampling targets can be calculated
 
     % We will be downsampling in space and time, so
     % we calculate some useful things here.
-    % The number of timepoints in the downsampled
-    % data
+    
+    % The number of timepoints in the downsampled data
     nTimepoints_downsampled = numel(1:userOptions.temporalDownsampleRate:nTimepoints_raw);
     timeStep_downsampled = timeStep_raw * userOptions.temporalDownsampleRate;
 
-    % Time time index of the first datapoint
-    % doesn't change in the downsampled data
+    % Time time index of the first datapoint doesn't change in the 
+    % downsampled data
     firstDatapointTime_downsampled = firstDatapointTime_raw;
 
-    % The time index of the last datapoint may
-    % change in the downsampled data, so should be
-    % recalculated
+    % The time index of the last datapoint may change in the downsampled 
+    % data, so should be recalculated
     lastDatapointTime_downsampled = firstDatapointTime_downsampled + (nTimepoints_downsampled * timeStep_downsampled);
 
     % This metadata struct will be useful for
@@ -270,6 +268,8 @@ function STCMetadata = convertToSTCMetadata(MEGData_stc, usingMask, mask, userOp
     if usingMask
         % Make sure we're using the vertices of the
         % mask on the correct hemisphere.
+        % TODO: not actually downsampling here?!?! Need to intersect with
+        % TODO: 1:targetResolution
         STCMetadata.vertices = uint32(sort(mask.vertices(:)));
     else
         % If we're not using a mask, we still need to
@@ -282,6 +282,6 @@ function STCMetadata = convertToSTCMetadata(MEGData_stc, usingMask, mask, userOp
 end%function
 
 % For some unknown reason this is necessary if using parfor
-function parsave_local(version, path, sourceMeshes) %#ok<INUSD>
+function parsave_local(version, path, sourceMeshes) %#ok<INUSD> It says sourceMeshes is unused, but actually it's saved
     save(version, path, 'sourceMeshes');
 end%function

@@ -12,7 +12,7 @@
 %      non-negative.
 %
 % Cai Wingfield 2015-11
-function [searchlight_paths, lagSTCMetadatas] = searchlight_dynamic_model_source(RDMPaths, dynamic_model, slSTCMetadatas, userOptions, varargin)
+function [searchlight_path, lagSTCMetadatas] = searchlight_dynamic_model_source(RDMPaths, dynamic_model, slSTCMetadatas, subject_i, chi, userOptions, varargin)
 
     import rsa.*
     import rsa.meg.*
@@ -54,66 +54,54 @@ function [searchlight_paths, lagSTCMetadatas] = searchlight_dynamic_model_source
     
     
     %% Set up values to be returned, whether or not any work is really done.
-    
-    for chi = 'LR'
         
-        %% Where to save results
-        
-        % Directory
-        searchlight_mesh_dir = fullfile(userOptions.rootPath, 'Meshes');
-        gotoDir(searchlight_mesh_dir);
-        
-        % The same paths will be used for mat files and stc files, the only
-        % differences being the extension.
-        
-        % Paths
-        searchlight_paths.(chi) = fullfile(searchlight_mesh_dir, ...
-            sprintf('%ssearhclight_mesh_betas-%sh', file_name_prefix, lower(chi)));
-        
-        
-        %% Prepare lag for the models
+    %% Where to save results
 
-        % The models are assumed to have the same number of timepoints as the
-        % data, and the timepoints are assumed to be corresponding.
+    % Directory
+    searchlight_mesh_dir = fullfile(userOptions.rootPath, 'Meshes');
+    gotoDir(searchlight_mesh_dir);
 
-        % The timepoints in the model timelines and the timepoints in the data
-        % timelines are assumed to be corresponding at 0 lag, though the models
-        % will be  offset by the specified lag.
+    % The same paths will be used for mat files and stc files, the only
+    % differences being the extension.
 
-        % Remember that STCmetadata.tstep measures lag in SECONDS, so we
-        % must convert it to miliseconds.
-        timestep_in_ms = slSTCMetadatas.(chi).tstep * 1000;
-        % And then to timepoints.
-        lag_in_timepoints = round(lag_in_ms / timestep_in_ms);
+    % Paths
+    searchlight_path = fullfile(searchlight_mesh_dir, ...
+        sprintf('%s%s_sl_r_mesh-%sh', file_name_prefix, userOptions.subjectNames{subject_i}, lower(chi)));
 
 
-        %% Prepare lag STC metadata
-    
-        lagSTCMetadatas.(chi).tstep = slSTCMetadatas.(chi).tstep;
-        lagSTCMetadatas.(chi).vertices = slSTCMetadatas.(chi).vertices;
-        lagSTCMetadatas.(chi).tmax = slSTCMetadatas.(chi).tmax;
-        % tmin is increased by...
-        lagSTCMetadatas.(chi).tmin = slSTCMetadatas.(chi).tmin + ...
-            ...% timesteps equal to...
-            (lagSTCMetadatas.(chi).tstep * ( ...
-                ...% the fixed lag we apply.
-                lag_in_timepoints));
-        
-    end
-    
+    %% Prepare lag for the models
+
+    % The models are assumed to have the same number of timepoints as the
+    % data, and the timepoints are assumed to be corresponding.
+
+    % The timepoints in the model timelines and the timepoints in the data
+    % timelines are assumed to be corresponding at 0 lag, though the models
+    % will be  offset by the specified lag.
+
+    % Remember that STCmetadata.tstep measures lag in SECONDS, so we
+    % must convert it to miliseconds.
+    timestep_in_ms = slSTCMetadatas.tstep * 1000;
+    % And then to timepoints.
+    lag_in_timepoints = round(lag_in_ms / timestep_in_ms);
+
+
+    %% Prepare lag STC metadata
+
+    lagSTCMetadatas.tstep = slSTCMetadatas.tstep;
+    lagSTCMetadatas.vertices = slSTCMetadatas.vertices;
+    lagSTCMetadatas.tmax = slSTCMetadatas.tmax;
+    % tmin is increased by...
+    lagSTCMetadatas.tmin = slSTCMetadatas.tmin + ...
+        ...% timesteps equal to...
+        (lagSTCMetadatas.tstep * ( ...
+            ...% the fixed lag we apply.
+            lag_in_timepoints));
+
     
     %% Check for overwrites
     
     promptOptions.functionCaller = 'searchlight_dynamic_model_source';
-    file_i = 1;
-    for chi = 'LR'
-        fileNames = fieldnames(searchlight_paths);
-        for file_name_i = 1:numel(fileNames)
-            fileName = fileNames{file_name_i};
-            promptOptions.checkFiles(file_i).address = [searchlight_paths.(fileName).(chi) '.mat'];
-            file_i = file_i + 1;
-        end
-    end
+    promptOptions.checkFiles.address = [searchlight_path '.mat'];
     % Some of the file names are templates, so we don't want these 'files'
     % failing to be detected to result in rerunning in every case.
     promptOptions.quantification = 'existential';
@@ -128,39 +116,38 @@ function [searchlight_paths, lagSTCMetadatas] = searchlight_dynamic_model_source
     
         [n_timepoints_models] = numel(dynamic_model);
 
-        for chi = 'LR'
+        prints('Loading RDM mesh from "%s"...', RDMPaths);
 
-            prints('Loading RDM mesh from "%s"...', RDMPaths.(chi));
+        slRDMs = directLoad(RDMPaths);
 
-            slRDMs = directLoad(RDMPaths.(chi));
+        prints('Applying lag to dynamic model timelines...');
 
-            prints('Applying lag to dynamic model timelines...');
+        [n_vertices, n_timepoints_data] = size(slRDMs);
 
-            [n_vertices, n_timepoints_data] = size(slRDMs);
-            
-            n_timepoints_overlap = n_timepoints_data - lag_in_timepoints;
+        n_timepoints_overlap = n_timepoints_data - lag_in_timepoints;
 
-            prints('Working at a lag of %dms, which corresponds to %d timepoints at this resolution.', lag_in_ms, lag_in_timepoints);
+        prints('Working at a lag of %dms, which corresponds to %d timepoints at this resolution.', lag_in_ms, lag_in_timepoints);
 
-            % Preallocate.
-            sl_r_mesh = nan(n_vertices, n_timepoints_overlap);
+        % Preallocate.
+        sl_r_mesh = nan(n_vertices, n_timepoints_overlap);
 
-            % Tell the user what's going on.
-            prints('Performing dynamic searchlight in %sh hemisphere...', lower(chi));
+        % Tell the user what's going on.
+        prints('Performing dynamic searchlight in %sh hemisphere...', lower(chi));
 
-            parfor t = 1:n_timepoints_overlap
-                prints('Working on timepoint %d/%d...', t, n_timepoints_overlap);
+        for t = 1:n_timepoints_overlap
+            prints('Working on timepoint %d/%d...', t, n_timepoints_overlap);
 
-                for v = 1:n_vertices
-                    sl_r_mesh(v, t) = corr(dynamic_model, slRDMs(v, t + lag_in_timepoints).RDM');
-                end%for:v
-            end%for:t
+            for v = 1:n_vertices
+                sl_r_mesh(v, t) = corr(dynamic_model(t).RDM', slRDMs(v, t + lag_in_timepoints).RDM', ...
+                    'rows', 'complete');
+            end%for:v
+        end%for:t
 
 
-            %% Save results
-            prints('Saving searchlight results for %sh hemisphere to "%s"...', lower(chi), searchlight_mesh_dir);
-            save('-v7.3', searchlight_paths.betas.(chi), 'sl_r_mesh');
+        %% Save results
+        prints('Saving searchlight results for %sh hemisphere to "%s"...', lower(chi), searchlight_mesh_dir);
+        save('-v7.3', searchlight_path, 'sl_r_mesh');
 
-        end%for:chi
+
     end%if
 end%function
