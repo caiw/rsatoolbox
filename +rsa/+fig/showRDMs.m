@@ -1,4 +1,4 @@
-function showRDMs(RDMs,figI,rankTransform01,clims,showColorbar, aspect, imagelabels, colourScheme)
+function showRDMs(RDMs,figI,rankTransform01,clims,showColorbar, aspect, imagelabels, RDMcolormap)
 % visualizes one or many RDMs. RDMs is a structure of RDMs (wrapped RDMs).
 % The 'RDM' and 'name' subfileds are required for this function only. figI
 % is the figure number in which the RDMs are displayed. if rankTransform01
@@ -139,9 +139,9 @@ for RDMi=1:nRDMs
 	set(gca,'XTick',[],'YTick',[]);
 	
 	if isstruct(RDMs)
-		title(['\bf' RDMtype{RDMi} deunderscore(RDMs(RDMi).name)]);
+		title(['\bf' RDMtype{RDMi} deunderscore(RDMs(RDMi).name)], 'FontSize', 30);
 	elseif ~isempty(RDMtype{RDMi})
-		title(['\bf' RDMtype{RDMi}]);
+		title(['\bf' RDMtype{RDMi}], 'FontSize', 30);
 	end;
 	axis square off;
 	
@@ -169,6 +169,11 @@ if showColorbar
     axis square off;
     %colormapJet4Print;
     colorbar;
+	
+    % Reapply colormap to colorbar
+	if exist('colourScheme', 'var')
+		colormap(gca, colourScheme);
+	end%if
 end
 
 end%function
