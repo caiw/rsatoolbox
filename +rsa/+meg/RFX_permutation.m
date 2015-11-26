@@ -6,11 +6,7 @@
 function RFX_permutation(Model, userOptions)
 
 import rsa.*
-import rsa.fig.*
-import rsa.fmri.*
 import rsa.rdm.*
-import rsa.sim.*
-import rsa.spm.*
 import rsa.stat.*
 import rsa.util.*
 
@@ -32,6 +28,7 @@ promptOptions.defaultResponse = 'S';
 promptOptions.checkFiles(1).address = fullfile(userOptions.rootPath, 'Maps', modelName, [MapsFilename, '-lh.stc']);
 promptOptions.checkFiles(2).address = fullfile(userOptions.rootPath, 'Maps', modelName, [MapsFilename, '-rh.stc']);
 
+import rsa.fig.*
 overwriteFlag = overwritePrompt(userOptions, promptOptions);
 
 if overwriteFlag
@@ -86,7 +83,7 @@ if overwriteFlag
             
             for subjectNumber = 1:nSubjects
                 %toss a coin
-                toss = (rand(1) > 0.5)*2-1;
+                toss = (rand > 0.5)*2-1;
                 rho(subjectNumber,:,:) = squeeze(all_rho(subjectNumber,:,:)).*toss;
             end
             
