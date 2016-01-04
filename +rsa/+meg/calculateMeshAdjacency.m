@@ -2,44 +2,13 @@
 %
 % All credit to Su Li and Andy Thwaites for working out how to do this and writing the original implementation
 % CW 5-2010, last updated by Li Su - 1 Feb 2012
-function searchlightAdjacencies = calculateMeshAdjacency(nVertices, searchlightRadius_mm, userOptions, varargin)
+function searchlightAdjacency = calculateMeshAdjacency(nVertices, searchlightRadius_mm, userOptions)
 
     import rsa.*
-    import rsa.fig.*
     import rsa.meg.*
-    import rsa.rdm.*
-    import rsa.sim.*
-    import rsa.spm.*
-    import rsa.stat.*
     import rsa.util.*
 
-    %% Parse inputs
-
-    % 'hemis'
-    nameHemis = 'hemis';
-    validHemis = {'L', 'l', 'R', 'r', 'LR', 'lr', 'RL', 'rl'};
-    checkHemis = @(x) (any(validatestring(x, validHemis)));
-    defaultHemis = 'L';
-
-    % Set up parser
-    ip = inputParser;
-    ip.CaseSensitive = false;
-    ip.StructExpand = false;
-
-    % Parameters
-    addParameter(ip, nameHemis, defaultHemis, checkHemis);
-
-    % Parse the inputs
-    parse(ip, varargin{:});
-
-    % Which hemisphere are we using?
-    % Use upper to keep the convention consistent and easy to read.
-    chis = upper(ip.Results.hemis);
-
-    returnHere = pwd;
-
-
-    %% Set up some constants
+     %% Set up some constants
 
     % The maximum possible per-hemisphere resolution.
     MAX_VERTICES = 40968;
@@ -55,61 +24,52 @@ function searchlightAdjacencies = calculateMeshAdjacency(nVertices, searchlightR
     
     gotoDir(userOptions.rootPath, 'ImageData');
 
-    for chi = chis
+    matrixFilename = sprintf('%s_vertexAdjacencyTable_radius-%dmm_%d-verts.mat', userOptions.analysisName, searchlightRadius_mm, nVertices);
 
-        matrixFilename = sprintf('%s_vertexAdjacencyTable_radius-%dmm_%d-verts-%sh.mat', userOptions.analysisName, searchlightRadius_mm, nVertices, lower(chi));
+    if ~exist(matrixFilename, 'file')
 
-        if ~exist(matrixFilename, 'file')
+        prints('The file "%s" doesn''t exist yet, creating it...', matrixFilename);
 
-            prints('The file "%s" doesn''t exist yet, creating it...', matrixFilename);
+        % Building a hash table to store adjacency information of all vertexs. 
+        % The resulting hash table is ht_*
+        hashTable = findAdjacentVerts(userOptions.averageSurfaceFiles.L);
 
-            % Building a hash table to store adjacency information of all vertexs. 
-            % The resulting hash table is ht_*
-            hashTable = findAdjacentVerts(userOptions.averageSurfaceFiles.(chi));
+        prints('Building vertex adjacency matrix...');
 
-            prints('Building vertex adjacency matrix...');
+        % Can't use parfor here in Matlab 2014
+        %for currentSearchlightCentre = 1:nVertices
+        for currentSearchlightCentre = 1:nVertices
 
-            % Can't use parfor here in Matlab 2014
-            %for currentSearchlightCentre = 1:nVertices
-            for currentSearchlightCentre = 1:nVertices
-
-                % Print feedback every once in a while.
-                if mod(currentSearchlightCentre, floor(nVertices/11)) == 0
-                    prints('Working on vertex %d of %d...', currentSearchlightCentre, nVertices, floor(100*(currentSearchlightCentre/nVertices)));
-                end
-
-                verticesWithinSearchlight = [];
-
-                for rMNE = 1:numel(searchlightCircleRadii_MNE)
-                    freesurferVerticesWithinThisMNERadius = getadjacent(num2str(currentSearchlightCentre),searchlightCircleRadii_MNE(rMNE),hashTable);
-                    verticesWithinSearchlight = [verticesWithinSearchlight; freesurferVerticesWithinThisMNERadius(freesurferVerticesWithinThisMNERadius <= nVertices)]; % By removing any which are greater than nVertices, we effectively downsample by the necessary ammount.  This seems a little too clever to work? < or <=?
-                end
-
-                searchlightAdjacency(currentSearchlightCentre,1:numel(verticesWithinSearchlight)) = verticesWithinSearchlight';
+            % Print feedback every once in a while.
+            if mod(currentSearchlightCentre, floor(nVertices/11)) == 0
+                prints('Working on vertex %d of %d...', currentSearchlightCentre, nVertices, floor(100*(currentSearchlightCentre/nVertices)));
             end
 
-            prints('Done!');
+            verticesWithinSearchlight = [];
 
-            % Force nans where zeros are.
-            searchlightAdjacency(searchlightAdjacency == 0) = NaN;
+            for rMNE = 1:numel(searchlightCircleRadii_MNE)
+                freesurferVerticesWithinThisMNERadius = getadjacent(num2str(currentSearchlightCentre),searchlightCircleRadii_MNE(rMNE),hashTable);
+                verticesWithinSearchlight = [verticesWithinSearchlight; freesurferVerticesWithinThisMNERadius(freesurferVerticesWithinThisMNERadius <= nVertices)]; % By removing any which are greater than nVertices, we effectively downsample by the necessary ammount.  This seems a little too clever to work? < or <=?
+            end
 
-            % Save this matrix
-            save(matrixFilename, 'searchlightAdjacency');
-
-        else
-
-            prints('The file "%s" has already been created, loading it...', matrixFilename);
-
-            searchlightAdjacency = directLoad(matrixFilename, 'searchlightAdjacency');
-
+            searchlightAdjacency(currentSearchlightCentre,1:numel(verticesWithinSearchlight)) = verticesWithinSearchlight';
         end
-        
-        searchlightAdjacencies.(chi) = searchlightAdjacency;
-        clear searchlightAdjacency;
-        
-    end%for:chis
 
-    cd(returnHere);
+        prints('Done!');
+
+        % Force nans where zeros are.
+        searchlightAdjacency(searchlightAdjacency == 0) = NaN;
+
+        % Save this matrix
+        save(matrixFilename, 'searchlightAdjacency');
+
+    else
+
+        prints('The file "%s" has already been created, loading it...', matrixFilename);
+
+        searchlightAdjacency = directLoad(matrixFilename, 'searchlightAdjacency');
+
+    end
 
 end%function
 
