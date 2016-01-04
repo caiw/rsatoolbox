@@ -80,11 +80,6 @@ if overwriteFlag
 
 		% Figure out which mask we're looking at
 		maskName = userOptions.maskNames{maskNumber};
-        if nMasks == nTimeWindows 
-            timeWindow = userOptions.maskTimeWindows{maskNumber};
-        else
-            timeWindow = userOptions.dataPointsSearchlightLimits;
-        end
 		
 		% Load the mask
 		readPath = [replaceWildcards(userOptions.maskPath, '[[maskName]]', maskName) '.label'];
