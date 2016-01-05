@@ -57,9 +57,9 @@ parfor subject_i = 1:nSubjects
         % We'll only do the searchlight if we haven't already done so,
         % unless we're being told to overwrite.
         if exist(RDMsPaths(subject_i).(chi), 'file') && ~overwriteFlag
-            prints('Searchlight already performed in %sh hemisphere of subject %d. Skipping.', lower(chi), subject_i);
+            prints('Sliding window analysis already performed in %sh hemisphere of subject %d. Skipping.', lower(chi), subject_i);
         else
-            prints('Shining RSA searchlight in the %sh source mesh of subject %d of %d (%s)...', lower(chi), subject_i, nSubjects, thisSubjectName);
+            prints('Sliding window analysis for subject %d of %d (%s)...', subject_i, nSubjects, thisSubjectName);
             
             single_hemisphere_searchlight( ...
                 swSpec, ...
@@ -69,7 +69,7 @@ parfor subject_i = 1:nSubjects
                 userOptions);
 
             %% Done
-            prints('Done with subeject %d''s %sh side.', subject_i, lower(chi));
+            prints('Done with subject %d''s %sh side.', subject_i, lower(chi));
 
         end%if:overwrite
     end%for:chi
@@ -108,7 +108,7 @@ function single_hemisphere_searchlight(swSpec, meshPath, RDMsPath, RDMsDir, user
     swRDMs(1:nWindowPositions) = struct('RDM', []);
 
     window_i = 0;
-    for window = slSpec.windowPositions'
+    for window = swSpec.windowPositions'
         % thisWindow is the indices of timepoints in each window
         thisWindow = window(1):window(2);
         window_i = window_i + 1;
