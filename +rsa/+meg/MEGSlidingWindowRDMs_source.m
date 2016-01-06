@@ -75,8 +75,6 @@ parfor subject_i = 1:nSubjects
     end%for:chi
 end%for:subject
 
-cd(returnHere); % And go back to where you started
-
 end%function
 
 
@@ -108,7 +106,7 @@ function single_hemisphere_searchlight(swSpec, meshPath, RDMsPath, RDMsDir, user
     swRDMs(1:nWindowPositions) = struct('RDM', []);
 
     window_i = 0;
-    for window = slSpec.windowPositions'
+    for window = swSpec.windowPositions'
         % thisWindow is the indices of timepoints in each window
         thisWindow = window(1):window(2);
         window_i = window_i + 1;

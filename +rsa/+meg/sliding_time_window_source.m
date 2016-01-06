@@ -3,7 +3,7 @@
 % Based on scripts written by Li Su and Isma Zulfiqar.
 %
 % Cai Wingfield 2016-01
-function output_Rs = sliding_time_window_source(swRDMsPaths, modelRDM, userOptions)
+function [output_Rs_L, output_Rs_R] = sliding_time_window_source(swRDMsPaths, modelRDM, userOptions)
 
     import rsa.*
     import rsa.meg.*
@@ -20,9 +20,16 @@ function output_Rs = sliding_time_window_source(swRDMsPaths, modelRDM, userOptio
         % preallocate
         output_Rs = nan(1,n_timePoints);
         
-        parfor t = 1:n_timePoints
+        for t = 1:n_timePoints
             dataRDM = swRDMs(t).RDM;
-            output_Rs(t) = corr(dataRDM, modelRDM.RDM, 'type', userOptions.RDMCorrelationType, 'rows', 'pairwise');
+            output_Rs(t) = corr(dataRDM', modelRDM.RDM', 'type', userOptions.RDMCorrelationType, 'rows', 'pairwise');
+        end
+        
+        % TODO: This isn't very elegant
+        if strcmpi(chi, 'L')
+            output_Rs_L = output_Rs;
+        else
+            output_Rs_R = output_Rs;
         end
     end
         
