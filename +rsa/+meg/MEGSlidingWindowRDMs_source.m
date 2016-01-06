@@ -75,8 +75,6 @@ parfor subject_i = 1:nSubjects
     end%for:chi
 end%for:subject
 
-cd(returnHere); % And go back to where you started
-
 end%function
 
 

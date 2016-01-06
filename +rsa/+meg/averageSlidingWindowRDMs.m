@@ -30,13 +30,13 @@ function averageRDMPaths = averageSlidingWindowRDMs(RDMPaths, userOptions)
 
                 this_subject_name = userOptions.subjectNames{subject_i};
 
-                prints('Loading searchlight RDMs for subject %s (%d/%d) %sh...', this_subject_name, subject_i, nSubjects, lower(chi));
-                this_subject_slRDMs = directLoad(RDMPaths(subject_i).(chi), 'searchlightRDMs');
+                prints('Loading sliding window RDMs for subject %s (%d/%d) %sh...', this_subject_name, subject_i, nSubjects, lower(chi));
+                this_subject_slRDMs = directLoad(RDMPaths(subject_i).(chi), 'swRDMs');
 
                 % For the first subject, we initialise the average and the
                 % nan-counter with some sizes.
                 if subject_i == 1
-                    nTimepoints = size(this_subject_slRDMs);
+                    nTimepoints = numel(this_subject_slRDMs);
                     average_slRDMs(1:nTimepoints) = struct('RDM', zeros(size(this_subject_slRDMs(1,1).RDM)));
                     nan_counts(1:nTimepoints) = struct('mask', zeros(size(this_subject_slRDMs(1,1).RDM)));
                 end
