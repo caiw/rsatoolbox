@@ -21,85 +21,85 @@
 % updated by Fawad 3-12014
 function [meshPaths, STCMetadatas] = MEGDataPreparation_source(betas, userOptions, varargin)
 
-import rsa.*
-import rsa.meg.*
-import rsa.rdm.*
-import rsa.stat.*
-import rsa.par.*
-import rsa.util.*
+    import rsa.*
+    import rsa.meg.*
+    import rsa.rdm.*
+    import rsa.stat.*
+    import rsa.par.*
+    import rsa.util.*
 
-%% Parse inputs
+    %% Parse inputs
 
-% 'masks'
-nameMask = 'mask';
-% We don't do any validation checks on the mask
-checkMask = @(x) (true);
-defaultMask = {};
+    % 'masks'
+    nameMask = 'mask';
+    % We don't do any validation checks on the mask
+    checkMask = @(x) (true);
+    defaultMask = {};
 
-% Set up parser
-ip = inputParser;
-ip.CaseSensitive = false;
-ip.StructExpand = false;
+    % Set up parser
+    ip = inputParser;
+    ip.CaseSensitive = false;
+    ip.StructExpand = false;
 
-% Parameters
-addParameter(ip, nameMask, defaultMask, checkMask);
+    % Parameters
+    addParameter(ip, nameMask, defaultMask, checkMask);
 
-% Parse the inputs
-parse(ip, varargin{:});
+    % Parse the inputs
+    parse(ip, varargin{:});
 
-% If masks was given a default value, we're not going to do any masking.
-usingMask = ~isempty(ip.Results.mask);
+    % If masks was given a default value, we're not going to do any masking.
+    usingMask = ~isempty(ip.Results.mask);
 
-%% Begin
+    %% Begin
 
-% We'll return to the pwd when the function has finished
-returnHere = pwd;
+    % We'll return to the pwd when the function has finished
+    returnHere = pwd;
 
-% Some conditions will have been rejected, and we'll record those in
-% this text file.
-imageDataPath = fullfile(userOptions.rootPath, 'ImageData');
-missingFilesLog = fullfile(imageDataPath, 'missingFilesLog.txt');
+    % Some conditions will have been rejected, and we'll record those in
+    % this text file.
+    imageDataPath = fullfile(userOptions.rootPath, 'ImageData');
+    missingFilesLog = fullfile(imageDataPath, 'missingFilesLog.txt');
 
-% Save a separate file for each subject and each hemisphere
-file_i = 1;
-for subject_i = 1:numel(userOptions.subjectNames)
-    for chi = 'LR'
-       meshPaths(subject_i).(chi) = fullfile(imageDataPath, [userOptions.analysisName, '_', userOptions.subjectNames{subject_i}, '_', lower(chi), 'h_CorticalMeshes.mat']); 
-       promptOptions.checkFiles(file_i).address = meshPaths(subject_i).(chi);
-       file_i = file_i + 1;
-    end 
-end
+    % Save a separate file for each subject and each hemisphere
+    file_i = 1;
+    for subject_i = 1:numel(userOptions.subjectNames)
+        for chi = 'LR'
+           meshPaths(subject_i).(chi) = fullfile(imageDataPath, [userOptions.analysisName, '_', userOptions.subjectNames{subject_i}, '_', lower(chi), 'h_CorticalMeshes.mat']); 
+           promptOptions.checkFiles(file_i).address = meshPaths(subject_i).(chi);
+           file_i = file_i + 1;
+        end 
+    end
 
-% Where data will be saved
-gotoDir(imageDataPath);
+    % Where data will be saved
+    gotoDir(imageDataPath);
 
-% Make this available outside.
-subjectSTCMetadatas = struct();
+    % Make this available outside.
+    subjectSTCMetadatas = struct();
 
-promptOptions.functionCaller = 'MEGDataPreparation_source';
-promptOptions.defaultResponse = 'S';
+    promptOptions.functionCaller = 'MEGDataPreparation_source';
+    promptOptions.defaultResponse = 'S';
 
-% We check for any existing files before the loop.
-% If the user says "skip", then we skip any files which exist and continue
-% to load others.
-overwriteFlag = overwritePrompt(userOptions, promptOptions);
+    % We check for any existing files before the loop.
+    % If the user says "skip", then we skip any files which exist and continue
+    % to load others.
+    overwriteFlag = overwritePrompt(userOptions, promptOptions);
 
-%% Loop over all subjects under consideration
-parfor subject_i = 1:numel(userOptions.subjectNames);
-    
-    %% Loop over all hemispheres under consideration
-    for chi = 'LR'
-        subjectSTCMetadatas(subject_i).(chi) = prepare_single_hemisphere_data(subject_i, chi, overwriteFlag, usingMask, ip.Results.mask, meshPaths, imageDataPath, missingFilesLog, betas, userOptions);
-    end%for:chi
-end%for:subjects
+    %% Loop over all subjects under consideration
+    parfor subject_i = 1:numel(userOptions.subjectNames);
 
-%% Prepare outputs
+        %% Loop over all hemispheres under consideration
+        for chi = 'LR'
+            subjectSTCMetadatas(subject_i).(chi) = prepare_single_hemisphere_data(subject_i, chi, overwriteFlag, usingMask, ip.Results.mask, meshPaths, imageDataPath, missingFilesLog, betas, userOptions);
+        end%for:chi
+    end%for:subjects
 
-% These should all be the same, so we can just take the first on, which
-% will contain both hemispheres.
-STCMetadatas = subjectSTCMetadatas(1);
+    %% Prepare outputs
 
-cd(returnHere); % Go back
+    % These should all be the same, so we can just take the first on, which
+    % will contain both hemispheres.
+    STCMetadatas = subjectSTCMetadatas(1);
+
+    cd(returnHere); % Go back
 
 end%function
 
@@ -128,12 +128,12 @@ function STCMetadata = prepare_single_hemisphere_data(subject_i, chi, overwriteF
     % We only load the data if we haven't already done so, unless we've
     % been told to overwrite.
     if exist(meshPaths(subject_i).(chi), 'file') && ~overwriteFlag
-        prints('Subject %d (%s) %sh data already prepared. Loading just enough to get metadata.', subject_i, thisSubjectName, chi);
         
         % We still need the metadata file, so we'll read the first
         % condition of the first session, and build the metadata based on
         % that.
         readPath = replaceWildcards(userOptions.betaPath, '[[betaIdentifier]]', betas(1, 1).identifier, '[[subjectName]]', thisSubjectName, '[[LR]]', lower(chi));
+        prints('Subject %d (%s) %sh data already prepared. Loading just enough to get metadata [%s].', subject_i, thisSubjectName, chi, readPath);
         STCMetadata = convertToSTCMetadata( ...
             mne_read_stc_file1(readPath), ...
             usingMask, masks([masks.chi] == chi), userOptions);
@@ -141,6 +141,7 @@ function STCMetadata = prepare_single_hemisphere_data(subject_i, chi, overwriteF
         prints('Loading on subject %d (%s), %s side', subject_i, thisSubjectName, chi);
 
         % Loop over sessions and conditions
+        nan_list = [];
         for session_i = 1:nSessions
             for condition_i = 1:nConditions
 
@@ -154,7 +155,7 @@ function STCMetadata = prepare_single_hemisphere_data(subject_i, chi, overwriteF
                 catch ex
                     % when a trial is rejected due to artifact, this item
                     % is replaced by NaNs. Li Su 3-2012
-                    prints('Failed to read data for condition %d. Using NaNs instead.', condition_i);
+                    prints('Failed to read data for condition %d from %s. Using NaNs instead.', condition_i, readPath);
                     % Log the missing file
                     dlmwrite(missingFilesLog, str2mat(replaceWildcards(betas(session_i, condition_i).identifier, '[[subjectName]]', thisSubjectName)), 'delimiter', '', '-append');
                 end
@@ -187,14 +188,28 @@ function STCMetadata = prepare_single_hemisphere_data(subject_i, chi, overwriteF
                             ...% Downsample time by subsampling the timepoints
                             1:userOptions.temporalDownsampleRate:end); % (vertices, time, condition, session)
                 else
-                    % Make sure it actually has NaNs in if there was an
-                    % error for this condition.
-                    % TODO: This only works if the first condition always
-                    % TODO: gets read.
-                    sourceMeshes(:, :, condition_i, session_i) = NaN(numel(STCMetadata.vertices), size(sourceMeshes, 2));
+                    
+                    % Remember the nan at this c_i and s_i!
+                    nan_list = [nan_list; [condition_i, session_i]];
+                    
                 end
             end%for:condition
         end%for:session
+        
+        n_vertices = size(sourceMeshes, 1);
+        n_timepoints = size(sourceMeshes, 2);
+        
+        
+        % Make sure it actually has NaNs in if there was an error for this
+        % condition
+        for cs_pair = nan_list'
+           c_i = cs_pair(1);
+           s_i = cs_pair(2);
+           
+           sourceMeshes(:, :, c_i, s_i) = NaN(n_vertices, n_timepoints);
+        end
+        
+        % Save it!
 
         gotoDir(imageDataPath);
         parsave_local('-v7.3', meshPaths(subject_i).(chi), sourceMeshes);
