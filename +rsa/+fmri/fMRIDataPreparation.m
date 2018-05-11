@@ -39,13 +39,13 @@ function [varargout] = fMRIDataPreparation(betaCorrespondence, userOptions)
 %                        is used.
 %
 % The following files are saved by this function:
-%        userOptions.rootPath/ImageData/
-%                userOptions.analysisName_ImageData.mat
+%        <userOptions.rootPath>/ImageData/
+%                <userOptions.analysisName>_ImageData.mat
 %                        Contains the raw beta images in a struct such that
 %                        fullBrainVols.(subject) is a [nVoxels nConditions
 %                        nSessions] matrix.
-%        userOptions.rootPath/Details/
-%                userOptions.analysisName_fMRIDataPreparation_Details.mat
+%        <userOptions.rootPath>/Details/
+%                <userOptions.analysisName>_fMRIDataPreparation_Details.mat
 %                        Contains the userOptions for this execution of the
 %                        function and a timestamp.
 %  

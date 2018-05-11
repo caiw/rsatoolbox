@@ -161,7 +161,7 @@ rsa.util.prints( ...
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 tic
-rsa.meg.get_cluster_p_value(model, userOptions);
+rsa.stat.get_cluster_p_value(model, userOptions);
 toc
 
 
